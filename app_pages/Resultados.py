@@ -4,137 +4,133 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime as dt
 
-def resultados():
-    # Upload sheets
-    df_func = pd.read_excel("sheets/employees.xlsx", converters={'cpf': str, 'data_nascimento': dt.date})
-    df_prod = pd.read_excel("sheets/products.xlsx")
-    df_sale = pd.read_excel("sheets/sales.xlsx", converters={'data_venda': dt.date})
-
-    df_temp_sale = pd.DataFrame(columns=['id_funcionario','nome_funcionario','id_produto','nome_produto','placa_carro','valor_venda','data_venda','taxa_comissao','valor_comissao','valor_liquido'])
-    df_sale = pd.concat([df_sale, df_temp_sale], ignore_index=True)
-
-    df_sale['data_venda'] = pd.to_datetime(df_sale['data_venda'], format='%Y-%m-%d')
+def resultados(df_sales):
+    '''Results window'''
 
     st.title("Resultados")
 
-    date_col = list(set(df_sale['data_venda'].map(lambda x: f'{x.year}/{x.month}')))
+    date_col = list(df_sales['data_venda_abv'])
+    df_sales['id_produto'] = df_sales['id_produto'].astype(str)
 
     with st.container():
 
         date_selected = st.multiselect('Selecione a(s) Data(s)', date_col)
         if len(date_selected) > 0:
-            df_sale_up = pd.DataFrame(columns=df_sale.columns)
+            df_sales_up = pd.DataFrame(columns=df_sales.columns)
             for date in date_selected:
                 year_selected = date.split('/')[0]
                 month_selected = date.split('/')[1]
-                df_temp = df_sale.loc[(df_sale['data_venda'].dt.year == int(year_selected)) & (df_sale['data_venda'].dt.month == int(month_selected))]
-                df_sale_up = pd.concat([df_sale_up, df_temp])
+                df_temp = df_sales.loc[(df_sales['data_venda'].dt.year == int(year_selected)) & (df_sales['data_venda'].dt.month == int(month_selected))]
+                df_sales_up = pd.concat([df_sales_up, df_temp])
         else:
-            df_sale_up = df_sale
+            df_sales_up = df_sales
 
     # Create DFs
-    df_emp_up = df_sale_up[['id_funcionario','nome_funcionario','valor_venda']].groupby(by=['id_funcionario','nome_funcionario']).sum().sort_values(by='valor_venda', ascending=False).reset_index()
-    df_emp_up_count = df_sale_up[['id_funcionario','nome_funcionario','valor_venda']].groupby(by=['id_funcionario','nome_funcionario']).count().sort_values(by='valor_venda', ascending=False).reset_index()
-    df_emp_up_count.rename(columns={'valor_venda':'qtd'}, inplace=True)
+    # df_emp_up = df_sales_up[['id_funcionario','nome_funcionario','valor_venda']].groupby(by=['id_funcionario','nome_funcionario']).sum().sort_values(by='valor_venda', ascending=False).reset_index()
+    # df_emp_up_count = df_sales_up[['id_funcionario','nome_funcionario','valor_venda']].groupby(by=['id_funcionario','nome_funcionario']).count().sort_values(by='valor_venda', ascending=False).reset_index()
+    # df_emp_up_count.rename(columns={'valor_venda':'qtd'}, inplace=True)
 
-    df_prod_up = df_sale_up[['id_produto','nome_produto','valor_venda']].groupby(by=['id_produto','nome_produto']).sum().sort_values(by='valor_venda', ascending=False).reset_index()
-    df_prod_up_count = df_sale_up[['id_produto','nome_produto','valor_venda']].groupby(by=['id_produto','nome_produto']).count().sort_values(by='valor_venda', ascending=False).reset_index()
+    df_prod_up = df_sales_up[['id_produto','nome_produto','valor_venda']].groupby(by=['id_produto','nome_produto']).sum().sort_values(by='valor_venda', ascending=False).reset_index()
+    df_prod_up_count = df_sales_up[['id_produto','nome_produto','valor_venda']].groupby(by=['id_produto','nome_produto']).count().sort_values(by='valor_venda', ascending=False).reset_index()
     df_prod_up_count.rename(columns={'valor_venda':'qtd'}, inplace=True)
-
-    df_comissao = df_sale_up[['id_funcionario','nome_funcionario','valor_comissao']].groupby(by=['id_funcionario','nome_funcionario']).sum().sort_values(by='valor_comissao', ascending=False).reset_index()
-    df_valor_liquido_func = df_sale_up[['id_funcionario','nome_funcionario','valor_liquido']].groupby(by=['id_funcionario','nome_funcionario']).sum().sort_values(by='valor_liquido', ascending=False).reset_index()
-    df_valor_liquido_prod = df_sale_up[['id_produto','nome_produto','valor_liquido']].groupby(by=['id_produto','nome_produto']).sum().sort_values(by='valor_liquido', ascending=False).reset_index()
+    df_prod_up_count['qtd'] = df_prod_up_count['qtd'].astype(int)
+    
+    # df_comissao = df_sales_up[['id_funcionario','nome_funcionario','valor_comissao']].groupby(by=['id_funcionario','nome_funcionario']).sum().sort_values(by='valor_comissao', ascending=False).reset_index()
+    # df_valor_liquido_func = df_sales_up[['id_funcionario','nome_funcionario','valor_liquido']].groupby(by=['id_funcionario','nome_funcionario']).sum().sort_values(by='valor_liquido', ascending=False).reset_index()
+    # df_valor_liquido_prod = df_sales_up[['id_produto','nome_produto','valor_liquido']].groupby(by=['id_produto','nome_produto']).sum().sort_values(by='valor_liquido', ascending=False).reset_index()
 
     # Generate option_menu function
-    selected = option_menu(
-        menu_title = None,
-        options = ['Funcionário','Produto','Valor Líquido'],
-        icons = ['person','box','currency-dollar','currency-dollar'],
-        menu_icon = 'cast',
-        orientation = 'horizontal'
-    )
+    # selected = option_menu(
+    #     menu_title = None,
+    #     options = ['Produto','Valor Líquido'],
+    #     icons = ['person','box','currency-dollar','currency-dollar'],
+    #     menu_icon = 'cast',
+    #     orientation = 'horizontal'
+    # )
 
     # Display DFs
-    if selected == 'Funcionário':
+    # if selected == 'Funcionário':
 
-        with st.container():
-            st.subheader("Quantidade de Vendas por Funcionário")
+    #     with st.container():
+    #         st.subheader("Quantidade de Vendas por Funcionário")
 
-            col1, col2 = st.columns(2)
+    #         col1, col2 = st.columns(2)
 
-            with col1:    
-                st.write(df_emp_up_count)
+    #         with col1:    
+    #             st.write(df_emp_up_count)
             
-            with col2:
-                st.bar_chart(df_emp_up_count[['id_funcionario','qtd']], x='id_funcionario', y='qtd')
+    #         with col2:
+    #             st.bar_chart(df_emp_up_count[['id_funcionario','qtd']], x='id_funcionario', y='qtd')
 
-        with st.container():
-            st.subheader("Valor de Venda por Funcionário")
+    #     with st.container():
+    #         st.subheader("Valor de Venda por Funcionário")
 
-            col1, col2 = st.columns(2)
+    #         col1, col2 = st.columns(2)
 
-            with col1:
-                st.write(df_emp_up)
+    #         with col1:
+    #             st.write(df_emp_up)
 
-            with col2:
-                st.bar_chart(df_emp_up[['id_funcionario','valor_venda']], x='id_funcionario', y='valor_venda')
+    #         with col2:
+    #             st.bar_chart(df_emp_up[['id_funcionario','valor_venda']], x='id_funcionario', y='valor_venda')
 
-        with st.container():
-            st.subheader("Valor da Comissão por Funcionário")
+    #     with st.container():
+    #         st.subheader("Valor da Comissão por Funcionário")
 
-            col1, col2 = st.columns(2)
+    #         col1, col2 = st.columns(2)
 
-            with col1:
-                st.write(df_comissao)
+    #         with col1:
+    #             st.write(df_comissao)
             
-            with col2:
-                st.bar_chart(df_comissao, x='id_funcionario', y='valor_comissao')
+    #         with col2:
+    #             st.bar_chart(df_comissao, x='id_funcionario', y='valor_comissao')
 
                 
-    if selected == 'Produto':
+    # if selected == 'Produto':
         
-        with st.container():
-            st.subheader("Quantidade de Vendas por Produto")
+    with st.container():
+        st.subheader("Quantidade de Vendas por Produto")
 
-            col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-            with col1:
-                st.write(df_prod_up_count)
+        with col1:
+            st.write(df_prod_up_count)
 
-            with col2:
-                st.bar_chart(df_prod_up_count[['id_produto','qtd']], x='id_produto', y='qtd')
+        with col2:
+            st.bar_chart(df_prod_up_count, x='nome_produto', y='qtd', )
 
-        with st.container():
-            st.subheader("Valor de Venda por Produto")
+    with st.container():
+        st.subheader("Valor de Venda por Produto")
 
-            col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-            with col1:
-                st.write(df_prod_up)
+        with col1:
+            st.write(df_prod_up)
 
-            with col2:
-                st.bar_chart(df_prod_up[['id_produto','valor_venda']], x='id_produto', y='valor_venda')
+        with col2:
+            st.bar_chart(df_prod_up, x='nome_produto', y='valor_venda')
 
-    if selected == 'Valor Líquido':
+    # if selected == 'Valor Líquido':
 
-        with st.container():
-            st.subheader("Valor Líquido por Funcionário")
+        # with st.container():
+        #     st.subheader("Valor Líquido por Funcionário")
 
-            col1, col2 = st.columns(2)
+        #     col1, col2 = st.columns(2)
 
-            with col1:
-                st.write(df_valor_liquido_func)
+        #     with col1:
+        #         st.write(df_valor_liquido_func)
             
-            with col2:
-                st.bar_chart(df_valor_liquido_func[['id_funcionario','valor_liquido']], x='id_funcionario', y='valor_liquido')
+        #     with col2:
+        #         st.bar_chart(df_valor_liquido_func[['id_funcionario','valor_liquido']], x='id_funcionario', y='valor_liquido')
 
-        with st.container():
-            st.subheader("Valor Líquido por Produto")
+        # with st.container():
+        #     st.subheader("Valor Líquido por Produto")
 
-            col1, col2 = st.columns(2)
+        #     col1, col2 = st.columns(2)
 
-            with col1:
-                st.write(df_valor_liquido_prod)
+        #     with col1:
+        #         st.write(df_valor_liquido_prod)
             
-            with col2:
-                st.bar_chart(df_valor_liquido_prod[['id_produto','valor_liquido']], x='id_produto', y='valor_liquido')
+        #     with col2:
+        #         st.bar_chart(df_valor_liquido_prod[['id_produto','valor_liquido']], x='id_produto', y='valor_liquido')
+
+    return df_sales

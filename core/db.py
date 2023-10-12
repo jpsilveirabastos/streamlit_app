@@ -6,7 +6,7 @@ class Db_pg:
     def connect():
         conn = psycopg2.connect(dbname=DBNAME, user=USER, password=PASSWORD, host=HOST)
         cur = conn.cursor()
-        return cur,conn
+        return cur, conn
 
     def disconnect(cur, conn):
         cur.close()

@@ -1,49 +1,31 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 from streamlit_option_menu import option_menu
-from st_pages import Page, add_page_title, show_pages
-import pandas as pd
-from datetime import datetime as dt
-import datetime
-import pickle
-from pathlib import Path
-# from core.db import Db_mg, Db_pg
+from core.db import Db_pg
 from app_pages.Home import home
 from app_pages.FluxoCaixa import fluxo_caixa
 from app_pages.Registrar import registrar
 from app_pages.Resultados import resultados
+from app_pages.functions import load_data
 
 st.set_page_config(page_title='App', layout='wide')
 
-# --- USER AUTHENTICATION ---
-names = ["Peter Parker", "Rebecca Miller"]
-usernames = ["pparker", "rmiller"]
+# User Auth
 
-hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
+cur, conn = Db_pg.connect()
 
-credentials = {
-        "usernames":{
-            usernames[0]:{
-                "email":'pparker@gmail.com',
-                "name":names[0],
-                "password":hashed_passwords[0]
-                },
-            usernames[1]:{
-                "email":'rmiller@gmail.com',
-                "name":names[1],
-                "password":hashed_passwords[1]
-                }
-            }
-        }
+query = fr"select * from app_auth;"
+cur.execute(query)
+list_cred = cur.fetchall()
+credentials = {"usernames":{}}
+dict_permissions = {}
+dict_company_id = {}
+for cred in list_cred:
+    credentials["usernames"][cred[0]] = {'email':cred[0],'name':cred[1],'password':cred[2]}
+    dict_permissions[cred[0]] = cred[3]
+    dict_company_id[cred[0]] = cred[6]
 
-# cur, conn = Db_pg.connect()
-
-# query = fr"select * from autodemand_auth;"
-# cur.execute(query)
-# list_cred = cur.fetchall()
-# credentials = {"usernames":{}}
-# for cred in list_cred:
-#     credentials["usernames"][cred[0]] = {'email':cred[0],'name':cred[2],'password':cred[1]}
+Db_pg.disconnect(cur, conn)
 
 col1, col2, col3 = st.columns(3)
 
@@ -59,24 +41,59 @@ with col2:
         st.warning("Please enter your username and password")
 
 if authentication_status:
+
+    company_id = dict_company_id[username]
+
+    if "df_sales" not in st.session_state:
+        df_sales, df_employees, df_despesa, df_products = load_data(company_id)
+        st.session_state["df_sales"] = df_sales
+        st.session_state["df_employees"] = df_employees
+        st.session_state["df_despesa"] = df_despesa
+        st.session_state["df_products"] = df_products
+
+    else:
+        df_sales = st.session_state["df_sales"]
+        df_employees = st.session_state["df_employees"]
+        df_despesa = st.session_state["df_despesa"]
+        df_products = st.session_state["df_products"]
+
     with st.sidebar:
         selected = option_menu(name, ['Home', 'Registrar','Resultados','Fluxo de Caixa'], menu_icon="cast", default_index=0)
         authenticator.logout('Logout')
     
+    cur, conn = Db_pg.connect()
+
     if selected == 'Home':
+
         col1, col2, col3 = st.columns([1,2,1])
         with col2:
-            home()
+            df_sales = home(cur, conn, df_sales)
+            st.session_state["df_sales"] = df_sales
+
     if selected == 'Registrar':
+
         col1, col2, col3 = st.columns([1,2,1])
         with col2:
-            registrar()
+            df_employees, df_products, df_sales, df_despesa = registrar(cur, conn, company_id, df_employees, df_products, df_sales, df_despesa)
+            st.session_state["df_employees"] = df_employees
+            st.session_state["df_products"] = df_products
+            st.session_state["df_sales"] = df_sales
+            st.session_state["df_despesa"] = df_despesa
+
     if selected == 'Resultados':
+
         col1, col2, col3 = st.columns([1,2,1])
         with col2:
-            resultados()
+            df_sales = resultados(df_sales)
+            st.session_state["df_sales"] = df_sales
+
     if selected == 'Fluxo de Caixa':
+
         col1, col2, col3 = st.columns([1,2,1])
         with col2:
-            fluxo_caixa()
+            df_sales, df_despesa = fluxo_caixa(df_sales, df_despesa)
+            st.session_state["df_sales"] = df_sales
+            st.session_state["df_despesa"] = df_despesa
+
+    Db_pg.disconnect(cur, conn)
     

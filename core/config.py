@@ -1,6 +1,9 @@
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 
-DBNAME = 'test'
-USER = 'postgres'
-PASSWORD = '1234'
-HOST = 'postgres'
+DBNAME = os.getenv('DBNAME')
+USER = os.getenv('USER')
+PASSWORD = os.getenv('PASSWORD')
+HOST = os.getenv('HOST')
