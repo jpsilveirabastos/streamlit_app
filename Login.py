@@ -11,7 +11,7 @@ from app_pages.functions import load_data
 st.set_page_config(page_title='App', layout='wide')
 
 # User Auth
-
+ 
 cur, conn = Db_pg.connect()
 
 query = fr"select * from app_auth;"
