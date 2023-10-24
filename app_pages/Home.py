@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime as dt
+from ..core.config import TESTE_VAR
 
 def home(cur, conn, df_sales):
-    st.title('Resumo Geral')
+    st.title('Resumo Geral' + TESTE_VAR)
 
     # Upload sheets
     # df_func = pd.read_excel("sheets/employees.xlsx", converters={'cpf': str, 'data_nascimento': dt.date})
