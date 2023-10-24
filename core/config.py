@@ -3,9 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-TESTE_VAR = os.environ.get("TESTE_VAR")
-DBNAME = os.getenv('DBNAME')
-USER = os.getenv('USER')
-PASSWORD = os.getenv('PASSWORD')
-HOST = os.getenv('HOST')
+DBNAME = os.environ.get('DBNAME')
+USER = os.environ.get('USER')
+PASSWORD = os.environ.get('PASSWORD')
+HOST = os.environ.get('HOST')
 
